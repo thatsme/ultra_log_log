@@ -22,7 +22,6 @@ defmodule UltraLogLog.ReferenceVectorsTest do
   use ExUnit.Case, async: true
 
   @moduletag :reference_vectors
-  @moduletag :skip
 
   @fixtures_dir Path.join([__DIR__, "fixtures"])
 
@@ -33,12 +32,14 @@ defmodule UltraLogLog.ReferenceVectorsTest do
 
       test "p=#{p}, n=#{n}" do
         fixture = Path.join(@fixtures_dir, "ull_p#{@p}_n#{@n}.bin")
-        seeds = Path.join(@fixtures_dir, "ull_p#{@p}_n#{@n}.seeds")
+        seeds = Path.join(@fixtures_dir, "ull_n#{@n}.seeds")
 
         assert File.exists?(fixture), "missing fixture #{fixture} — generate from Hash4j"
 
         expected_registers = File.read!(fixture)
-        hashes = seeds |> File.stream!() |> Enum.map(&(&1 |> String.trim() |> String.to_integer()))
+
+        hashes =
+          seeds |> File.stream!() |> Enum.map(&(&1 |> String.trim() |> String.to_integer()))
 
         ull =
           Enum.reduce(hashes, UltraLogLog.new(precision: @p), fn h, acc ->

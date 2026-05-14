@@ -66,6 +66,8 @@ defmodule UltraLogLog do
   merges shards (and remote nodes) on demand for a global cardinality estimate.
   """
 
+  import Bitwise
+
   alias UltraLogLog.{Encoding, Estimator, Hash}
 
   @type precision :: 3..26
@@ -213,6 +215,9 @@ defmodule UltraLogLog do
   """
   @spec from_binary(binary()) :: {:ok, t()} | {:error, term()}
   def from_binary(<<"ULL1", p::8, regs::binary>>) when byte_size(regs) == 1 <<< p do
+    # TODO(v0.2): expose an optional `UltraLogLog.validate/1` that
+    # checks per-byte reachability for callers handling untrusted
+    # binaries. Skipped on the hot path for serialization throughput.
     {:ok, %__MODULE__{precision: p, m: 1 <<< p, registers: regs, martingale: nil}}
   end
 
@@ -234,6 +239,4 @@ defmodule UltraLogLog do
     # TODO: implement martingale update (Estimator.Martingale.delta/4)
     0.0
   end
-
-  import Bitwise
 end

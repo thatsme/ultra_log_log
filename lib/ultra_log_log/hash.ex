@@ -23,6 +23,8 @@ defmodule UltraLogLog.Hash do
       to keep collision probability negligible (Heule++ argument)
   """
 
+  import Bitwise
+
   @doc """
   Hash a term to a 64-bit unsigned integer.
 
@@ -33,6 +35,6 @@ defmodule UltraLogLog.Hash do
   def hash64(term) do
     high = :erlang.phash2(term, 1 <<< 32)
     low = :erlang.phash2({:salt, term}, 1 <<< 32)
-    Bitwise.bor(Bitwise.bsl(high, 32), low)
+    high <<< 32 ||| low
   end
 end

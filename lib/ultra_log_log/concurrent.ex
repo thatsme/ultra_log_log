@@ -47,6 +47,8 @@ defmodule UltraLogLog.Concurrent do
   is essentially never taken in practice.
   """
 
+  import Bitwise
+
   @opaque t :: %__MODULE__{
             precision: UltraLogLog.precision(),
             m: pos_integer(),
@@ -121,6 +123,4 @@ defmodule UltraLogLog.Concurrent do
 
     %UltraLogLog{precision: p, m: m, registers: regs, martingale: nil}
   end
-
-  import Bitwise
 end
