@@ -29,3 +29,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   incorrect value, suitable only for smoke tests
 - `UltraLogLog.Hash.hash64/1` uses `:erlang.phash2/2` concatenation —
   acceptable for tests, not for production use
+- No CI configured; v0.2 will add GitHub Actions before any public release

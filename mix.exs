@@ -56,7 +56,6 @@ defmodule UltraLogLog.MixProject do
         "Paper (VLDB 2024)" => "https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf",
         "Paper (arXiv extended)" => "https://arxiv.org/abs/2308.16862"
       },
-      maintainers: ["Alex"],
       files: ~w(lib mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
