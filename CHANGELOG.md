@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   within 0.1% (observed ~1e-15 relative on all 16 fixtures)
 - Statistical tests pass at p ∈ {10,12,14}, N up to 10⁶, within 3σ of
   theoretical RMSE (run via `mix test --include statistical`)
+- Local research artifacts (paper dump, hash4j source checkouts) are
+  gitignored — paper canonical link in README, hash4j pin in
+  `test/fixtures/java/Dockerfile`
 
 ### Notes
 

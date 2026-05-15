@@ -9,3 +9,8 @@ ultra_log_log-*.tar
 /tmp/
 /.elixir_ls/
 .DS_Store
+
+# Local research artifacts. See CHANGELOG [Unreleased] for rationale.
+paper/
+test/fixtures/java/hash4j-src/
+hash4j-src-v030/
