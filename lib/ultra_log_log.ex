@@ -1,69 +1,125 @@
 defmodule UltraLogLog do
   @moduledoc """
-  UltraLogLog: a space-efficient probabilistic data structure for approximate
-  distinct counting.
+  Space-efficient approximate distinct counting on the BEAM.
 
-  This is a BEAM-native implementation of the algorithm described in:
+  Implementation of:
 
   > Otmar Ertl. *UltraLogLog: A Practical and More Space-Efficient Alternative
   > to HyperLogLog for Approximate Distinct Counting.* PVLDB 17(7), 2024.
-  > https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf
+  > <https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf>
 
-  ## Why UltraLogLog over HyperLogLog?
+  UltraLogLog (ULL) is a 2024 successor to HyperLogLog. It keeps every
+  practical property HLL is famous for — constant memory, constant-time
+  inserts, commutative/idempotent/associative merge — and adds **24–28%
+  less memory at the same accuracy**, depending on which estimator you
+  pick. The trade is one extra register bit per slot (8-bit ULL registers
+  vs 6-bit HLL ones), recovered many times over by a tighter information
+  density per register.
 
-  UltraLogLog (ULL) shares all the practical properties of HyperLogLog — it is
-  commutative, idempotent, mergeable, and has constant-time inserts — but
-  requires roughly **24–28% less space** for the same accuracy depending on
-  estimator choice.
-
-  ULL uses **8-bit registers** (vs HLL's 6-bit packed), which trades a small
-  amount of raw space for byte-aligned access. On the BEAM this is a big win:
-  registers map directly to plain binaries, no bit-packing math on the hot path.
-  Wire-format compression (zstd/gzip) recovers the apparent overhead because
-  the entropy of ULL's register distribution is favourable.
-
-  ## Three estimators, three tradeoffs
-
-  | Estimator      | Storage factor | Rel. std. error | Notes                       |
-  |----------------|----------------|-----------------|-----------------------------|
-  | `:fgra` (def.) | 4.895          | 0.782/√m        | Fast, comparable to HLL     |
-  | `:mle`         | 4.631          | 0.761/√m        | 28% less than HLL, slower   |
-  | `:martingale`  | 3.466          | best            | Pre-merge only, invalidated |
-
-  ## Basic usage
+  ## Quick start
 
       iex> ull = UltraLogLog.new(precision: 12)
       iex> ull = UltraLogLog.add(ull, "session-abc")
       iex> ull = UltraLogLog.add(ull, "session-xyz")
       iex> {:ok, count} = UltraLogLog.cardinality(ull)
-      iex> count
-      2.0
+      iex> abs(count - 2.0) < 0.1
+      true
 
-  ## Memory footprint
+  Merging two sketches is value-level and associative — no coordinator,
+  no quorum, no consensus:
 
-  Precision `p` produces `2^p` 8-bit registers, so state size is exactly
+      iex> a = UltraLogLog.new(precision: 12) |> UltraLogLog.add("x")
+      iex> b = UltraLogLog.new(precision: 12) |> UltraLogLog.add("y")
+      iex> {:ok, count} = UltraLogLog.cardinality(UltraLogLog.merge(a, b))
+      iex> abs(count - 2.0) < 0.1
+      true
+
+  ## Estimators
+
+  Pick one of three estimators via the `:estimator` option to
+  `cardinality/2`. All three are paper-faithful translations of the
+  algorithms in Ertl 2024, cross-validated against the Hash4j Java
+  reference (v0.17.0) to floating-point precision.
+
+  | Estimator         | Storage factor | Rel. std. error | Use when                                                                                            |
+  |-------------------|---------------:|-----------------|-----------------------------------------------------------------------------------------------------|
+  | `:fgra` (default) | 4.895          | `0.782/√m`      | Default. Single-pass, no iteration.                                                                 |
+  | `:mle`            | 4.631          | `0.761/√m`      | Tightest bound; secant solver runs ~5 iterations per query.                                         |
+  | `:martingale`     | 3.466          | `0.658/√m`      | Single-stream sketch never merged; returns `{:error, :invalidated_by_merge}` after `merge/2`.       |
+
+  The martingale stderr derives from the memory-variance product
+  MVP ≈ 5·ln(2) ≈ 3.466 in the paper (§3.7); the 0.658 figure is
+  `√(MVP / 8)`.
+
+      iex> ull = UltraLogLog.new(precision: 12) |> UltraLogLog.add("k")
+      iex> {:ok, _} = UltraLogLog.cardinality(ull, estimator: :mle)
+
+  See `UltraLogLog.Estimator.FGRA`, `UltraLogLog.Estimator.MLE`, and
+  `UltraLogLog.Estimator.Martingale` for the per-estimator details.
+
+  ## Precision → memory → error
+
+  Precision `p` allocates `2^p` 8-bit registers — state size is exactly
   `2^p` bytes:
 
-      p=10 →  1 KB,  ~3.1% error
-      p=12 →  4 KB,  ~1.2% error
-      p=14 → 16 KB,  ~0.6% error
-      p=16 → 64 KB,  ~0.3% error
+      p=10 →  1 KB,  ~3.1% relative error
+      p=12 →  4 KB,  ~1.2% relative error  (default)
+      p=14 → 16 KB,  ~0.6% relative error
+      p=16 → 64 KB,  ~0.3% relative error
 
-  ## Concurrent inserts
+  Pick the smallest `p` whose error fits your use case. `p=12` is a
+  sensible default; bump to 14 if you need sub-percent accuracy.
 
-  For high-throughput pipelines, `UltraLogLog.Concurrent` provides a lock-free
-  insert path backed by `:atomics`:
+  ## Mergeability and CRDTs
 
-      {:ok, ref} = UltraLogLog.Concurrent.new(precision: 14)
-      # safe to call from any process / scheduler
-      UltraLogLog.Concurrent.add(ref, key)
-      snapshot = UltraLogLog.Concurrent.snapshot(ref)
-      {:ok, count} = UltraLogLog.cardinality(snapshot)
+  `merge/2` is element-wise on registers under the UltraLogLog partial
+  order. The operation is commutative, associative, and idempotent —
+  i.e. ULL sketches form a CRDT under merge. This is what makes
+  distributed cardinality estimation trivial: shards independently
+  maintain their own sketches, you merge on demand, and the answer is
+  exactly as if every insert had hit a single sketch.
 
-  ## Cluster-wide aggregation
+  Merging invalidates the martingale estimator (its incremental update
+  history is lost). FGRA and MLE remain valid on merged sketches.
 
-  `UltraLogLog.Cluster` shards inserts across a `PartitionSupervisor` and
-  merges shards (and remote nodes) on demand for a global cardinality estimate.
+  ## Serialization
+
+  `to_binary/1` and `from_binary/1` round-trip the sketch as a
+  versioned compact binary; cardinality is preserved exactly:
+
+      iex> ull = UltraLogLog.new(precision: 12)
+      iex> ull = Enum.reduce(1..100, ull, &UltraLogLog.add(&2, &1))
+      iex> {:ok, before} = UltraLogLog.cardinality(ull)
+      iex> {:ok, restored} = UltraLogLog.from_binary(UltraLogLog.to_binary(ull))
+      iex> {:ok, after_} = UltraLogLog.cardinality(restored)
+      iex> before == after_
+      true
+
+  Deserialization invalidates the martingale field — its incremental
+  history isn't part of the wire format. A `cardinality(restored,
+  estimator: :martingale)` call on a reloaded sketch therefore returns
+  `{:error, :invalidated_by_merge}`. FGRA and MLE round-trip cleanly.
+
+  ## Hashing
+
+  `add/2` accepts any term (hashed internally via `UltraLogLog.Hash`)
+  or a pre-computed non-negative integer treated as a 64-bit hash. The
+  v0.1 internal hash is a `:erlang.phash2/2` derivation suitable for
+  well-distributed inputs; production deployments with adversarial or
+  skewed keyspaces should pass pre-computed hashes from a quality
+  64-bit function (xxhash3, wyhash). A native xxhash3 NIF is planned
+  for v0.2.
+
+  ## Status
+
+    * v0.1 ships the immutable sketch, all three estimators, merge,
+      serialize, and downsize. Bit-exact validated against Hash4j v0.17.0.
+    * v0.2 will add a lock-free `:atomics`-backed insert path, a native
+      hash function, and benchmarks.
+    * v0.3 will add `PartitionSupervisor`-sharded cluster-wide merge.
+
+  See `CHANGELOG.md` for the full release history and `README.md` for
+  the empirical-validation summary.
   """
 
   import Bitwise

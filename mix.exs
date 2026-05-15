@@ -1,7 +1,7 @@
 defmodule UltraLogLog.MixProject do
   use Mix.Project
 
-  @version "0.1.0-rc.0"
+  @version "0.1.0"
   @source_url "https://github.com/thatsme/ultra_log_log"
 
   def project do
@@ -31,31 +31,43 @@ defmodule UltraLogLog.MixProject do
       # Dev / test
       {:stream_data, "~> 1.1", only: [:dev, :test]},
       {:benchee, "~> 1.3", only: [:dev]},
-      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      # Available in both :dev and :test so `MIX_ENV=test mix docs`
+      # works as the documented build path (test env avoids the
+      # OTP 27+ compile failure in the optional `:hyper` benchmark
+      # dep — same reason `MIX_ENV=test mix dialyzer` is the
+      # documented dialyzer command).
+      {:ex_doc, "~> 0.34", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
 
-      # Optional comparison targets for benchmarks
+      # Optional comparison targets for benchmarks (v0.2)
       {:hypex, "~> 1.1", only: [:dev], optional: true},
       {:hyper, "~> 1.0", only: [:dev], optional: true}
     ]
   end
 
+  # Hex.pm truncates descriptions; keep under 300 chars.
   defp description do
-    """
-    UltraLogLog — a space-efficient successor to HyperLogLog for approximate
-    distinct counting, with a BEAM-native concurrent insert path and
-    cluster-wide merge. Based on Ertl, VLDB 2024.
-    """
+    "Space-efficient distinct counting for the BEAM. Implements UltraLogLog " <>
+      "(Ertl, VLDB 2024), a 2024 successor to HyperLogLog with 24–28% less " <>
+      "memory at the same accuracy. Includes FGRA, MLE, and martingale " <>
+      "estimators, CRDT merge, and bit-exact validation against the Hash4j " <>
+      "Java reference."
   end
 
   defp package do
     [
       licenses: ["Apache-2.0"],
+      maintainers: ["Alessio Battistutta"],
       links: %{
         "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
         "Paper (VLDB 2024)" => "https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf",
-        "Paper (arXiv extended)" => "https://arxiv.org/abs/2308.16862"
+        "Paper (arXiv extended)" => "https://arxiv.org/abs/2308.16862",
+        "Hash4j reference (v0.17.0)" => "https://github.com/dynatrace-oss/hash4j/tree/v0.17.0"
       },
+      # Ship only the files the package needs at runtime + the docs that
+      # users will read on hex.pm. Excludes: test/, bench/, docs/measurements/,
+      # paper/, .github/, the publish checklist.
       files: ~w(lib mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
@@ -63,16 +75,20 @@ defmodule UltraLogLog.MixProject do
   defp docs do
     [
       main: "readme",
-      extras: ["README.md", "CHANGELOG.md"],
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md"
+      ],
       source_ref: "v#{@version}",
+      source_url: @source_url,
       groups_for_modules: [
         Core: [UltraLogLog, UltraLogLog.Encoding, UltraLogLog.Hash],
         Estimators: [
           UltraLogLog.Estimator.FGRA,
           UltraLogLog.Estimator.MLE,
           UltraLogLog.Estimator.Martingale
-        ],
-        Concurrent: [UltraLogLog.Concurrent, UltraLogLog.Cluster]
+        ]
       ]
     ]
   end
