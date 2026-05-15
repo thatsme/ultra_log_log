@@ -67,7 +67,7 @@ have I seen?" since 2007: constant memory, constant-time inserts, and
 mergeable across shards or nodes. UltraLogLog keeps all of that.
 
 What UltraLogLog adds is information density. Where HLL packs 6-bit
-registers, ULL uses byte-aligned 8-bit ones — one extra bit per slot,
+registers, ULL uses byte-aligned 8-bit ones — two extra bits per slot,
 recovered many times over by a 2024 estimator family that extracts more
 signal from each register. The net is 24–28% less memory at the same
 standard error, depending on which estimator you choose. The byte
@@ -121,7 +121,8 @@ double precision.
 
 Most fixtures bit-identical; the worst case is one trailing-bit flip
 in floating-point accumulation. The secant solver converges in 3–6
-iterations on every fixture and on 300 additional random sketches.
+iterations on every fixture and across 100 additional random sketches
+per precision (300 total).
 
 ### Martingale vs Hash4j (16 fixtures)
 
@@ -178,8 +179,8 @@ reasonable default.
 ## Status and roadmap
 
 - **v0.1 (current)** — immutable sketch, FGRA / MLE / martingale
-  estimators, merge, binary serialization, downsize stub, full
-  validation against Hash4j v0.17.0.
+  estimators, merge, binary serialization, downsize (full
+  implementation in v0.2), full validation against Hash4j v0.17.0.
 - **v0.2 (planned)** — lock-free `:atomics`-backed concurrent insert
   path; native 64-bit hash (xxhash3 NIF); benchmarks; GitHub Actions
   CI.

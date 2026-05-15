@@ -33,15 +33,15 @@ defmodule UltraLogLog.MixProject do
       {:benchee, "~> 1.3", only: [:dev]},
       # Available in both :dev and :test so `MIX_ENV=test mix docs`
       # works as the documented build path (test env avoids the
-      # OTP 27+ compile failure in the optional `:hyper` benchmark
-      # dep — same reason `MIX_ENV=test mix dialyzer` is the
-      # documented dialyzer command).
+      # OTP 27+ compile failure in the `:hyper` benchmark comparison
+      # dependency — same reason `MIX_ENV=test mix dialyzer` is the
+      # documented dialyzer command). Tracked for cleanup in v0.2.
       {:ex_doc, "~> 0.34", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
 
-      # Optional comparison targets for benchmarks (v0.2)
-      {:hypex, "~> 1.1", only: [:dev], optional: true},
-      {:hyper, "~> 1.0", only: [:dev], optional: true}
+      # HLL comparison targets for the v0.2 benchmark suite.
+      {:hypex, "~> 1.1", only: [:dev]},
+      {:hyper, "~> 1.0", only: [:dev]}
     ]
   end
 

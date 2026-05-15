@@ -38,8 +38,9 @@ Hash4j v0.17.0 Java reference.
 - **Binary serialization** (`UltraLogLog.to_binary/1` /
   `UltraLogLog.from_binary/1`) — versioned compact format
   (`<<"ULL1", precision::8, registers::binary>>`).
-- **Downsize** (`UltraLogLog.downsize/2`) — public API; the implementation
-  for `target_p < p` raises pending v0.2 work (paper §5).
+- **Downsize** (`UltraLogLog.downsize/2`) — accepts `target_p == p`
+  (returns the sketch unchanged); for `target_p < p` raises pending
+  v0.2 implementation (paper §5).
 
 ### Validation
 
@@ -77,8 +78,9 @@ Hash4j v0.17.0 Java reference.
   pre-computed hashes from a quality 64-bit function. A native
   xxhash3 NIF is planned for v0.2.
 - **Dialyzer** runs under `MIX_ENV=test` to avoid a pre-existing OTP
-  27+ float-match warning in the optional `:hyper` benchmark
-  dependency. The warning has no effect on this package's code.
+  27+ float-match warning in the `:hyper` benchmark comparison
+  dependency (planned for v0.2 benchmarks; not yet exercised in
+  v0.1). The warning has no effect on this package's code.
 - **No CI** is configured in v0.1. v0.2 will add GitHub Actions.
 - **Concurrent and cluster paths** are deferred: a lock-free
   `:atomics`-backed insert path is planned for v0.2, and a

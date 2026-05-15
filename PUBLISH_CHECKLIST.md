@@ -14,12 +14,13 @@
 - [ ] Format is clean:
       `mix format --check-formatted`
 - [ ] Dialyzer is clean (test env, due to OTP 27+ float-match warning
-      in `:hyper` benchmark dep):
+      in the `:hyper` benchmark comparison dependency):
       `MIX_ENV=test mix dialyzer`
 - [ ] `MIX_ENV=test mix docs` builds without warnings.
-      (Test env, same reason as dialyzer: the optional `:hyper`
-      benchmark dep doesn't compile under OTP 27+. Will resolve when
-      v0.2 drops `:hyper` from the benchmark set.)
+      (Test env, same reason as dialyzer: the `:hyper` benchmark
+      comparison dependency doesn't compile under OTP 27+. Will
+      resolve when v0.2 moves `:hyper` to a dedicated `:bench`
+      environment — see GH issue #2.)
 - [ ] `mix hex.build` builds the tarball without warnings.
 
 ## Content review

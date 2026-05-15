@@ -49,8 +49,8 @@ and writes deterministic snapshots into `test/fixtures/`. Requires
 Docker (or any compatible runtime — OrbStack, Rancher Desktop). The
 container is single-shot, leaves nothing behind, and pins
 Hash4j v0.17.0 in its `Dockerfile`. Re-pinning Hash4j is a deliberate
-maintenance event — see the [project memory note][pinning] on why
-v0.17.0 is the version used.
+maintenance event — see [`dynatrace-research/ultraloglog-paper`][pinning]
+for why v0.17.0 is the version used.
 
 [pinning]: https://github.com/dynatrace-research/ultraloglog-paper
 

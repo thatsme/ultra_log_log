@@ -113,7 +113,8 @@ defmodule UltraLogLog do
   ## Status
 
     * v0.1 ships the immutable sketch, all three estimators, merge,
-      serialize, and downsize. Bit-exact validated against Hash4j v0.17.0.
+      serialize, and downsize (full implementation in v0.2). Bit-exact
+      validated against Hash4j v0.17.0.
     * v0.2 will add a lock-free `:atomics`-backed insert path, a native
       hash function, and benchmarks.
     * v0.3 will add `PartitionSupervisor`-sharded cluster-wide merge.
