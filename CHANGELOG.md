@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Local research artifacts (paper dump, hash4j source checkouts) are
   gitignored — paper canonical link in README, hash4j pin in
   `test/fixtures/java/Dockerfile`
+- MLE estimator implemented per Ertl 2024 §3.1 — secant solver
+  (Ertl 2017 Algorithm 8) over the log-likelihood, Jensen lower-bound
+  initial guess, inline Taylor + doubling recurrence for `h(x)` (no
+  `:math.exp` in the inner loop), bias correction per paper eq. (11)
+- Spot-check tests against Hash4j `MAXIMUM_LIKELIHOOD_ESTIMATOR` v0.17.0
+  pass within 0.5% (observed ~1e-16 relative on all 16 fixtures); mean
+  3–4 secant iterations per call, max 6
+- Statistical and convergence-speed tests pass at p ∈ {10,12,14},
+  N up to 10⁶, within 3σ of theoretical RMSE (0.761/√m)
 
 ### Notes
 

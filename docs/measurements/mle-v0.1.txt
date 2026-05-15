@@ -1,0 +1,171 @@
+Generated: 2026-05-15T09:16:36Z via REPORT=1 mix test --include statistical test/mle_test.exs
+
+Running ExUnit with seed: 112202, max_cases: 20
+Excluding tags: [:reference_vectors]
+Including tags: [:statistical]
+
+
+p=10, N=10^4
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        10039.4   (bias  +0.394%)
+  empirical stddev:      166.7   (rel.  1.667%)
+  bias within 3σ bound:  PASS (0.394% < 1.302%)
+  stddev within 1.5x:    PASS (1.667% < 3.567%)
+
+.
+p=10, N=10^5
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        99875.9   (bias  -0.124%)
+  empirical stddev:      2192.6   (rel.  2.193%)
+  bias within 3σ bound:  PASS (0.124% < 1.302%)
+  stddev within 1.5x:    PASS (2.193% < 3.567%)
+
+.
+p=10, N=10^3
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        998.4   (bias  -0.164%)
+  empirical stddev:      17.8   (rel.  1.78%)
+  bias within 3σ bound:  PASS (0.164% < 1.302%)
+  stddev within 1.5x:    PASS (1.78% < 3.567%)
+
+.
+p=12, N=10^6
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        1002567.6   (bias  +0.257%)
+  empirical stddev:      12271.9   (rel.  1.227%)
+  bias within 3σ bound:  PASS (0.257% < 0.651%)
+  stddev within 1.5x:    PASS (1.227% < 1.783%)
+
+..
+p=10, N=10^6
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        1004035.7   (bias  +0.404%)
+  empirical stddev:      20988.0   (rel.  2.099%)
+  bias within 3σ bound:  PASS (0.404% < 1.302%)
+  stddev within 1.5x:    PASS (2.099% < 3.567%)
+
+.
+p=14, N=100
+  theoretical stderr:    5.9e-03 (relative)
+  empirical mean:        100.0   (bias  +0.015%)
+  empirical stddev:      0.6   (rel.  0.575%)
+  bias within 3σ bound:  PASS (0.015% < 0.326%)
+  stddev within 1.5x:    PASS (0.575% < 0.892%)
+
+.
+p=12, N=10^3
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        998.3   (bias  -0.17%)
+  empirical stddev:      7.3   (rel.  0.726%)
+  bias within 3σ bound:  PASS (0.17% < 0.651%)
+  stddev within 1.5x:    PASS (0.726% < 1.783%)
+
+.
+p=12, N=100
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        99.8   (bias  -0.202%)
+  empirical stddev:      1.0   (rel.  0.972%)
+  bias within 3σ bound:  PASS (0.202% < 0.651%)
+  stddev within 1.5x:    PASS (0.972% < 1.783%)
+
+.
+p=12, N=10^4
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        9981.6   (bias  -0.184%)
+  empirical stddev:      101.5   (rel.  1.015%)
+  bias within 3σ bound:  PASS (0.184% < 0.651%)
+  stddev within 1.5x:    PASS (1.015% < 1.783%)
+
+.
+p=14, N=10^5
+  theoretical stderr:    5.9e-03 (relative)
+  empirical mean:        100060.3   (bias  +0.06%)
+  empirical stddev:      614.7   (rel.  0.615%)
+  bias within 3σ bound:  PASS (0.06% < 0.326%)
+  stddev within 1.5x:    PASS (0.615% < 0.892%)
+
+.
+p=14, N=10^4
+  theoretical stderr:    5.9e-03 (relative)
+  empirical mean:        9992.4   (bias  -0.076%)
+  empirical stddev:      35.5   (rel.  0.355%)
+  bias within 3σ bound:  PASS (0.076% < 0.326%)
+  stddev within 1.5x:    PASS (0.355% < 0.892%)
+
+..
+p=10, N=100
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        99.8   (bias  -0.154%)
+  empirical stddev:      1.7   (rel.  1.709%)
+  bias within 3σ bound:  PASS (0.154% < 1.302%)
+  stddev within 1.5x:    PASS (1.709% < 3.567%)
+
+.
+p=14, N=10^6
+  theoretical stderr:    5.9e-03 (relative)
+  empirical mean:        1001601.6   (bias  +0.16%)
+  empirical stddev:      6138.3   (rel.  0.614%)
+  bias within 3σ bound:  PASS (0.16% < 0.326%)
+  stddev within 1.5x:    PASS (0.614% < 0.892%)
+
+..
+p=14, N=10^3
+  theoretical stderr:    5.9e-03 (relative)
+  empirical mean:        999.9   (bias  -0.01%)
+  empirical stddev:      3.2   (rel.  0.324%)
+  bias within 3σ bound:  PASS (0.01% < 0.326%)
+  stddev within 1.5x:    PASS (0.324% < 0.892%)
+
+.
+UltraLogLog MLE estimator — measurement report
+Hash4j ref: v0.17.0 (MAXIMUM_LIKELIHOOD_ESTIMATOR)
+Tolerance: 0.5% relative
+Theoretical stderr: 0.761/√m
+
+┌────┬─────────┬─────────────────┬─────────────────┬──────────────┬───────┐
+│  p │       n │ ours            │ hash4j          │ rel. error   │ iters │
+├────┼─────────┼─────────────────┼─────────────────┼──────────────┼───────┤
+│  8 │     100 │        92.72694 │        92.72694 │          0.0 │     3 │
+│  8 │    1000 │       928.88855 │       928.88855 │          0.0 │     4 │
+│  8 │   10000 │     10757.24842 │     10757.24842 │          0.0 │     6 │
+│  8 │  100000 │    108837.83481 │    108837.83481 │      1.3e-16 │     6 │
+│ 10 │     100 │       100.35977 │       100.35977 │          0.0 │     2 │
+│ 10 │    1000 │       983.34139 │       983.34139 │          0.0 │     4 │
+│ 10 │   10000 │     10185.70836 │     10185.70836 │          0.0 │     6 │
+│ 10 │  100000 │    101394.53638 │    101394.53638 │          0.0 │     6 │
+│ 12 │     100 │       100.60968 │       100.60968 │          0.0 │     2 │
+│ 12 │    1000 │       987.88700 │       987.88700 │          0.0 │     3 │
+│ 12 │   10000 │      9951.77812 │      9951.77812 │          0.0 │     4 │
+│ 12 │  100000 │     99921.08010 │     99921.08010 │          0.0 │     6 │
+│ 14 │     100 │       100.14661 │       100.14661 │          0.0 │     2 │
+│ 14 │    1000 │      1002.93105 │      1002.93105 │          0.0 │     3 │
+│ 14 │   10000 │      9968.64533 │      9968.64533 │          0.0 │     3 │
+│ 14 │  100000 │     99819.73920 │     99819.73920 │          0.0 │     5 │
+└────┴─────────┴─────────────────┴─────────────────┴──────────────┴───────┘
+Summary: 16 fixtures, max rel. error 1.3e-16, mean 8.4e-18, iters mean 4.06 max 6
+
+.
+p=12, N=10^5
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        100006.9   (bias  +0.007%)
+  empirical stddev:      1158.7   (rel.  1.159%)
+  bias within 3σ bound:  PASS (0.007% < 0.651%)
+  stddev within 1.5x:    PASS (1.159% < 1.783%)
+
+.
+Statistical tests: 15 cells × 30 trials = 450 estimates
+Worst bias: +0.404% at p=10, N=10^6 (bound ±1.302%)
+Worst stddev ratio: 1.034 at p=14, N=10^5 (bound 1.5)
+All PASS
+
+
+Convergence speed: 300 random sketches across 3 precisions
+  p=10: mean 3.79 iters, max 6
+  p=12: mean 3.4 iters, max 6
+  p=14: mean 3.05 iters, max 6
+Worst mean: 3.79 iters at p=10 (bound 10)
+Worst max:  6 iters at p=10 (bound 50)
+
+
+Finished in 61.5 seconds (61.5s async, 0.00s sync)
+19 tests, 0 failures
