@@ -35,6 +35,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3–4 secant iterations per call, max 6
 - Statistical and convergence-speed tests pass at p ∈ {10,12,14},
   N up to 10⁶, within 3σ of theoretical RMSE (0.761/√m)
+- Martingale (HIP) estimator implemented per Ertl 2024 §3.7 / Alg. 2 —
+  incremental on every successful `add/2`; `cardinality/2` with
+  `estimator: :martingale` returns `{:ok, value}` for active sketches
+  and `{:error, :invalidated_by_merge}` after `merge/2`
+- The `martingale` field of `%UltraLogLog{}` now carries
+  `{running_estimate, current_μ}` (was a bare float); enables the
+  constant-time `μ ← μ − h(r) + h(r')` update from Algorithm 2
+- Spot-check tests against Hash4j `MartingaleEstimator` v0.17.0 pass
+  bit-exactly (rel = 0.0 on all 16 fixtures) when replaying the same
+  deterministic seed stream through `add/2`
+- Statistical tests pass at p ∈ {10,12,14}, N up to 10⁶, within 3σ of
+  theoretical RMSE (√(5·ln(2)/(8m)) ≈ 0.658/√m)
 
 ### Notes
 

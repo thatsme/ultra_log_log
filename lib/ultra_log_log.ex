@@ -76,8 +76,11 @@ defmodule UltraLogLog do
           precision: precision(),
           m: pos_integer(),
           registers: binary(),
-          # Martingale state — only valid before any merge
-          martingale: nil | float()
+          # Martingale state — `{running_estimate, current_mu}` while
+          # valid; `nil` once the sketch has been merged (which
+          # destroys the per-insert update history the martingale
+          # depends on). See `UltraLogLog.Estimator.Martingale`.
+          martingale: nil | {float(), float()}
         }
 
   defstruct [:precision, :m, :registers, :martingale]
@@ -107,7 +110,11 @@ defmodule UltraLogLog do
       precision: p,
       m: m,
       registers: :binary.copy(<<0>>, m),
-      martingale: 0.0
+      # Initial martingale state per Ertl 2024 §3.7 line 798:
+      # `μ = 1` because the first insert is certain to change a
+      # register (every register is at `h(0) = 1/m`, summed over
+      # `m` registers).
+      martingale: {0.0, 1.0}
     }
   end
 
@@ -139,7 +146,7 @@ defmodule UltraLogLog do
       ull
     else
       new_regs = put_byte(regs, idx, merged)
-      martingale = update_martingale(ull.martingale, current, merged, ull.m)
+      martingale = update_martingale(ull.martingale, current, merged, p)
       %{ull | registers: new_regs, martingale: martingale}
     end
   end
@@ -230,13 +237,13 @@ defmodule UltraLogLog do
     <<head::binary, byte::8, tail::binary>>
   end
 
-  # Martingale correction — see Cohen 2015, Ting 2014. Each non-trivial register
-  # change incrementally updates an unbiased cardinality estimate. Only valid
-  # while we own the entire insert stream; merging invalidates it.
-  defp update_martingale(nil, _, _, _), do: nil
+  # Martingale correction — see Cohen 2015, Ting 2014. Each non-trivial
+  # register change incrementally updates an unbiased cardinality
+  # estimate. Only valid while we own the entire insert stream; merging
+  # invalidates it (handled by `merge/2` setting the field to `nil`).
+  defp update_martingale(nil, _old, _new, _p), do: nil
 
-  defp update_martingale(_state, _old, _new, _m) do
-    # TODO: implement martingale update (Estimator.Martingale.delta/4)
-    0.0
+  defp update_martingale({_, _} = state, old, new, p) do
+    Estimator.Martingale.delta(state, old, new, p)
   end
 end
