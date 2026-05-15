@@ -1,0 +1,163 @@
+Generated: 2026-05-15T06:47:23Z via REPORT=1 mix test --include statistical test/fgra_test.exs
+
+Running ExUnit with seed: 403380, max_cases: 20
+Excluding tags: [:reference_vectors]
+Including tags: [:statistical]
+
+
+p=12, N=10^6
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        1002467.0   (bias  +0.247%)
+  empirical stddev:      12447.0   (rel.  1.245%)
+  bias within 3σ bound:  PASS (0.247% < 0.669%)
+  stddev within 1.5x:    PASS (1.245% < 1.833%)
+
+.
+p=14, N=10^5
+  theoretical stderr:    6.1e-03 (relative)
+  empirical mean:        100102.9   (bias  +0.103%)
+  empirical stddev:      692.8   (rel.  0.693%)
+  bias within 3σ bound:  PASS (0.103% < 0.335%)
+  stddev within 1.5x:    PASS (0.693% < 0.917%)
+
+.
+p=10, N=10^6
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        1003980.4   (bias  +0.398%)
+  empirical stddev:      23441.0   (rel.  2.344%)
+  bias within 3σ bound:  PASS (0.398% < 1.339%)
+  stddev within 1.5x:    PASS (2.344% < 3.667%)
+
+.
+p=10, N=10^3
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        998.0   (bias  -0.202%)
+  empirical stddev:      20.7   (rel.  2.073%)
+  bias within 3σ bound:  PASS (0.202% < 1.339%)
+  stddev within 1.5x:    PASS (2.073% < 3.667%)
+
+.
+p=12, N=10^5
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        99951.8   (bias  -0.048%)
+  empirical stddev:      1244.1   (rel.  1.244%)
+  bias within 3σ bound:  PASS (0.048% < 0.669%)
+  stddev within 1.5x:    PASS (1.244% < 1.833%)
+
+.
+p=14, N=10^3
+  theoretical stderr:    6.1e-03 (relative)
+  empirical mean:        999.6   (bias  -0.038%)
+  empirical stddev:      4.2   (rel.  0.425%)
+  bias within 3σ bound:  PASS (0.038% < 0.335%)
+  stddev within 1.5x:    PASS (0.425% < 0.917%)
+
+.
+p=10, N=10^5
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        99896.3   (bias  -0.104%)
+  empirical stddev:      2432.1   (rel.  2.432%)
+  bias within 3σ bound:  PASS (0.104% < 1.339%)
+  stddev within 1.5x:    PASS (2.432% < 3.667%)
+
+.
+p=12, N=10^3
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        998.1   (bias  -0.186%)
+  empirical stddev:      9.0   (rel.  0.902%)
+  bias within 3σ bound:  PASS (0.186% < 0.669%)
+  stddev within 1.5x:    PASS (0.902% < 1.833%)
+
+.
+UltraLogLog FGRA estimator — measurement report
+Hash4j ref: v0.17.0 (OPTIMAL_FGRA_ESTIMATOR)
+Tolerance: 0.1% relative
+Theoretical stderr: 0.782/√m
+
+┌────┬─────────┬─────────────────┬─────────────────┬──────────────┐
+│  p │       n │ ours            │ hash4j          │ rel. error   │
+├────┼─────────┼─────────────────┼─────────────────┼──────────────┤
+│  8 │     100 │        93.39121 │        93.39121 │      6.1e-16 │
+│  8 │    1000 │       945.54581 │       945.54581 │      3.6e-16 │
+│  8 │   10000 │     10900.06137 │     10900.06137 │          0.0 │
+│  8 │  100000 │    108297.14602 │    108297.14602 │          0.0 │
+│ 10 │     100 │       101.24035 │       101.24035 │      8.4e-16 │
+│ 10 │    1000 │       975.73449 │       975.73449 │          0.0 │
+│ 10 │   10000 │     10255.19879 │     10255.19879 │      1.8e-16 │
+│ 10 │  100000 │    101353.83297 │    101353.83297 │          0.0 │
+│ 12 │     100 │       100.91304 │       100.91304 │      7.0e-16 │
+│ 12 │    1000 │       981.15975 │       981.15975 │      5.8e-16 │
+│ 12 │   10000 │      9938.72106 │      9938.72106 │      1.8e-16 │
+│ 12 │  100000 │     99516.89897 │     99516.89897 │          0.0 │
+│ 14 │     100 │       100.22456 │       100.22456 │          0.0 │
+│ 14 │    1000 │      1000.91274 │      1000.91274 │      2.3e-16 │
+│ 14 │   10000 │      9952.97895 │      9952.97895 │      3.7e-16 │
+│ 14 │  100000 │     99866.03773 │     99866.03773 │      1.5e-16 │
+└────┴─────────┴─────────────────┴─────────────────┴──────────────┘
+Summary: 16 fixtures, max rel. error 8.4e-16, mean 2.6e-16
+
+.
+p=14, N=100
+  theoretical stderr:    6.1e-03 (relative)
+  empirical mean:        100.0   (bias  -0.008%)
+  empirical stddev:      0.6   (rel.  0.624%)
+  bias within 3σ bound:  PASS (0.008% < 0.335%)
+  stddev within 1.5x:    PASS (0.624% < 0.917%)
+
+.
+p=10, N=100
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        100.0   (bias  -0.033%)
+  empirical stddev:      2.1   (rel.  2.061%)
+  bias within 3σ bound:  PASS (0.033% < 1.339%)
+  stddev within 1.5x:    PASS (2.061% < 3.667%)
+
+.
+p=10, N=10^4
+  theoretical stderr:    2.4e-02 (relative)
+  empirical mean:        10041.1   (bias  +0.411%)
+  empirical stddev:      171.8   (rel.  1.718%)
+  bias within 3σ bound:  PASS (0.411% < 1.339%)
+  stddev within 1.5x:    PASS (1.718% < 3.667%)
+
+.
+p=14, N=10^6
+  theoretical stderr:    6.1e-03 (relative)
+  empirical mean:        1001766.7   (bias  +0.177%)
+  empirical stddev:      6241.7   (rel.  0.624%)
+  bias within 3σ bound:  PASS (0.177% < 0.335%)
+  stddev within 1.5x:    PASS (0.624% < 0.917%)
+
+.
+p=12, N=100
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        99.7   (bias  -0.266%)
+  empirical stddev:      1.1   (rel.  1.053%)
+  bias within 3σ bound:  PASS (0.266% < 0.669%)
+  stddev within 1.5x:    PASS (1.053% < 1.833%)
+
+.
+p=12, N=10^4
+  theoretical stderr:    1.2e-02 (relative)
+  empirical mean:        9978.3   (bias  -0.217%)
+  empirical stddev:      107.0   (rel.  1.07%)
+  bias within 3σ bound:  PASS (0.217% < 0.669%)
+  stddev within 1.5x:    PASS (1.07% < 1.833%)
+
+.
+p=14, N=10^4
+  theoretical stderr:    6.1e-03 (relative)
+  empirical mean:        9993.1   (bias  -0.069%)
+  empirical stddev:      58.6   (rel.  0.586%)
+  bias within 3σ bound:  PASS (0.069% < 0.335%)
+  stddev within 1.5x:    PASS (0.586% < 0.917%)
+
+.
+Statistical tests: 15 cells × 30 trials = 450 estimates
+Worst bias: +0.411% at p=10, N=10^4 (bound ±1.339%)
+Worst stddev ratio: 1.134 at p=14, N=10^5 (bound 1.5)
+All PASS
+
+
+Finished in 51.7 seconds (51.7s async, 0.00s sync)
+16 tests, 0 failures
