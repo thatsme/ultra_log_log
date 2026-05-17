@@ -2,50 +2,66 @@ defmodule UltraLogLog.Concurrent do
   @moduledoc """
   Lock-free, `:atomics`-backed concurrent insert path for UltraLogLog.
 
-  This module is the first piece of `ultra_log_log` that does something
-  no other UltraLogLog implementation does: a genuinely concurrent
-  insert path native to the BEAM, with no GenServer, no lock, and no
-  message passing.
+  A `UltraLogLog.Concurrent` sketch is safe to insert into from any
+  process or scheduler with no GenServer, no lock, and no message
+  passing. The insert path is a CAS loop over a per-register 64-bit
+  `:atomics` cell. For value semantics — snapshots, serialization
+  round-trips, explicit CRDT merge — use the immutable `UltraLogLog`
+  instead, or call `snapshot/1` to materialize the immutable form
+  from a concurrent sketch.
 
-  ## When to use this
+  ## Quick start
 
-  Use `UltraLogLog.Concurrent` when many processes need to insert into
-  the same sketch concurrently — for example, every request handler in
-  a web server feeding a single per-metric sketch. Use the immutable
-  `UltraLogLog` when inserts are single-threaded or when you need value
-  semantics (snapshots, merges, serialization round-trips).
+      iex> {:ok, c} = UltraLogLog.Concurrent.new(precision: 12)
+      iex> :ok = UltraLogLog.Concurrent.add(c, "session-abc")
+      iex> :ok = UltraLogLog.Concurrent.add(c, "session-xyz")
+      iex> sketch = UltraLogLog.Concurrent.snapshot(c)
+      iex> {:ok, count} = UltraLogLog.cardinality(sketch)
+      iex> abs(count - 2.0) < 0.1
+      true
 
-  The active concurrent structure costs **8× the immutable form** (one
-  64-bit `:atomics` cell per register; 128 KB at `p=14` vs the
-  immutable form's 16 KB). This is deliberate. Concurrent sketches are
-  long-lived shared objects — typically one per metric, not millions —
-  and 128 KB of shared state is irrelevant. The alternative of packing
-  8 registers per cell was rejected because it creates *logical false
-  sharing*: two inserts targeting independent registers would contend
-  just because they share a 64-bit word, amplifying contention 8× and
-  turning the CAS loop into a bit-twiddling exercise. One cell per
-  register keeps the CAS loop clean and provably correct.
-
-  The compact 16 KB serialization form remains available via
-  `snapshot/1`, which converts to the immutable `%UltraLogLog{}`.
-
-  ## API
+  Concurrent inserts from many processes, all hitting the same shared
+  sketch:
 
       {:ok, c} = UltraLogLog.Concurrent.new(precision: 12)
 
-      # Lock-free insert — safe to call from ANY process / scheduler
-      :ok = UltraLogLog.Concurrent.add(c, "session-abc")
-      :ok = UltraLogLog.Concurrent.add(c, pre_computed_hash_integer)
+      1..1_000
+      |> Enum.chunk_every(100)
+      |> Enum.map(fn chunk ->
+        Task.async(fn -> Enum.each(chunk, &UltraLogLog.Concurrent.add(c, &1)) end)
+      end)
+      |> Task.await_many(:infinity)
 
-      # Snapshot to the immutable %UltraLogLog{} — for estimation,
-      # serialization, merge
       sketch = UltraLogLog.Concurrent.snapshot(c)
-      {:ok, count} = UltraLogLog.cardinality(sketch)
+      {:ok, _count} = UltraLogLog.cardinality(sketch)
 
   `add/2` returns `:ok` rather than an updated struct — it is a
   side-effecting operation on shared mutable state, not a value
   transformation. This is the deliberate API difference from
   `UltraLogLog.add/2`.
+
+  ## When to use this
+
+  Use `UltraLogLog.Concurrent` when many processes need to feed a
+  single shared sketch — for example, every request handler in a web
+  server inserting into one per-metric sketch. Use the immutable
+  `UltraLogLog` when inserts are single-threaded or when you need
+  value semantics.
+
+  The active concurrent structure costs **8× the immutable form's
+  memory** (one 64-bit `:atomics` cell per register; 128 KB at `p=14`
+  vs the immutable form's 16 KB). This is deliberate. Concurrent
+  sketches are long-lived shared objects — typically one per metric,
+  not millions — and 128 KB of shared state is irrelevant. The
+  alternative of packing 8 registers per cell was rejected because it
+  creates *logical false sharing*: two inserts targeting independent
+  registers would contend just because they share a 64-bit word,
+  amplifying contention 8× and turning the CAS loop into a
+  bit-twiddling exercise. One cell per register keeps the CAS loop
+  clean and provably correct.
+
+  The compact 16 KB serialization form remains available via
+  `snapshot/1`.
 
   ## Correctness under concurrency
 
@@ -57,7 +73,9 @@ defmodule UltraLogLog.Concurrent do
   inserting in parallel is identical, byte-for-byte, to an immutable
   sketch built by inserting the same elements serially, for any
   interleaving. See `test/concurrent_test.exs` for the
-  equivalence-under-contention proof.
+  equivalence-under-contention proof — verified by exact register-byte
+  equality at multiple `(p, N)` cells and reinforced by a StreamData
+  property test.
 
   ## Memory model
 
@@ -66,6 +84,9 @@ defmodule UltraLogLog.Concurrent do
   usual BEAM mechanisms — typically `Task.await/2` or `Task.await_many/2`
   after writer tasks complete establishes happens-before between the
   last CAS and the snapshot.
+
+  See `snapshot/1` for the (intentional, safe-by-construction)
+  semantics of snapshots taken while writers are still active.
   """
 
   import Bitwise

@@ -11,6 +11,8 @@ counting — same constant memory, constant-time inserts, and associative
 merge as HyperLogLog, but **24–28% less memory at the same accuracy**.
 This package is a paper-faithful Elixir port, cross-validated bit-for-bit
 against the [Hash4j Java reference][hash4j] (v0.17.0) on every estimator.
+It is listed as the Elixir implementation in the paper's
+[official reproducibility repository][paper-repo].
 
 The algorithm comes from:
 
@@ -22,6 +24,7 @@ The algorithm comes from:
 [paper]: https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf
 [arxiv]: https://arxiv.org/abs/2308.16862
 [hash4j]: https://github.com/dynatrace-oss/hash4j/tree/v0.17.0
+[paper-repo]: https://github.com/dynatrace-research/ultraloglog-paper#libraries-implementing-ultraloglog
 
 ## Quick start
 
@@ -29,7 +32,7 @@ Add to `mix.exs`:
 
 ```elixir
 def deps do
-  [{:ultra_log_log, "~> 0.1.0"}]
+  [{:ultra_log_log, "~> 0.2.0"}]
 end
 ```
 
@@ -96,6 +99,44 @@ cardinality is trivial: shards independently maintain sketches, merge on
 demand, and the answer is exactly as if every insert had hit a single
 sketch. No coordinator, no quorum, no consensus.
 
+## Concurrent inserts
+
+`UltraLogLog.Concurrent` is a lock-free, `:atomics`-backed variant of
+the sketch, safe to insert into from any process or scheduler — no
+GenServer, no lock, no message passing. The insert path is a CAS loop
+over a per-register 64-bit `:atomics` cell.
+
+```elixir
+{:ok, c} = UltraLogLog.Concurrent.new(precision: 12)
+
+# Inserts from many processes in parallel — all hit the same sketch
+1..1_000
+|> Enum.chunk_every(100)
+|> Enum.map(fn chunk ->
+  Task.async(fn -> Enum.each(chunk, &UltraLogLog.Concurrent.add(c, &1)) end)
+end)
+|> Task.await_many(:infinity)
+
+# Snapshot to the immutable %UltraLogLog{} for estimation, merge, or
+# serialization. FGRA and MLE work normally on the snapshot.
+sketch = UltraLogLog.Concurrent.snapshot(c)
+{:ok, count} = UltraLogLog.cardinality(sketch)
+```
+
+`snapshot/1` reads each `:atomics` cell independently rather than
+taking a global lock; if writers are active during the snapshot, cells
+may reflect different moments in time. This is safe by construction —
+register merge is monotone in the UltraLogLog partial order, so a
+"torn" snapshot is always a valid intermediate sketch, never an
+invalid one. For a globally consistent snapshot, quiesce writers
+first (e.g. `Task.await_many/2` on insert tasks, as the example above
+does).
+
+Use the immutable `UltraLogLog` for value semantics — snapshots,
+serialization round-trips, explicit CRDT merge. Use
+`UltraLogLog.Concurrent` when many processes need to feed a single
+shared sketch at high insert rates.
+
 ## Empirical validation
 
 Every estimator is cross-checked against Hash4j v0.17.0's reference
@@ -161,6 +202,39 @@ per-cell tables.
 [meas-mle]: https://github.com/thatsme/ultra_log_log/blob/main/docs/measurements/mle-v0.1.txt
 [meas-mart]: https://github.com/thatsme/ultra_log_log/blob/main/docs/measurements/martingale-v0.1.txt
 
+### Concurrent insert scaling
+
+`UltraLogLog.Concurrent` uses a lock-free CAS loop over `:atomics`.
+The benchmark suite measures total throughput at increasing process
+counts on a 10-core Apple M5 with 100k pre-hashed inserts at `p=12`:
+
+| Processes |    ips | Scaling |
+|----------:|-------:|--------:|
+|         1 |   24.8 |   1.00× |
+|         2 |   43.4 |   1.75× |
+|         4 |   69.7 |   2.81× |
+|         8 |   82.1 |   3.31× |
+|        16 |  105.3 |   4.24× |
+|        32 |  107.9 |   4.35× |
+
+The curve scales monotonically and flattens past core count, as
+expected for a CPU-bound workload. The high-process-count flattening
+is partly `Task.async` spawn/await overhead in the benchmark harness;
+long-lived inserter processes feeding a single shared sketch should
+scale closer to the 8-process point.
+
+Single-process comparison: the concurrent path runs at ~25.4 ips
+against ~23.6 ips for the immutable path (~1.08× faster), the
+opposite of the expected atomics overhead. The immutable `add/2`
+rebuilds a binary on every register-changing insert (an O(m)
+head/byte/tail copy); the concurrent path does two constant-time
+`:atomics` operations.
+
+Full Benchee output: [`concurrent-v0.2.txt`][meas-conc] in the
+repository.
+
+[meas-conc]: https://github.com/thatsme/ultra_log_log/blob/main/docs/measurements/concurrent-v0.2.txt
+
 ## Precision and memory
 
 Precision `p` allocates `2^p` 8-bit registers — state size is exactly
@@ -178,14 +252,16 @@ reasonable default.
 
 ## Status and roadmap
 
-- **v0.1 (current)** — immutable sketch, FGRA / MLE / martingale
-  estimators, merge, binary serialization, downsize (full
-  implementation in v0.2), full validation against Hash4j v0.17.0.
-- **v0.2 (planned)** — lock-free `:atomics`-backed concurrent insert
-  path; native 64-bit hash (xxhash3 NIF); benchmarks; GitHub Actions
-  CI.
+- **v0.1** — immutable sketch, FGRA / MLE / martingale estimators,
+  merge, binary serialization, downsize (precision-preserving only),
+  full validation against Hash4j v0.17.0.
+- **v0.2 (current)** — `UltraLogLog.Concurrent`: lock-free,
+  `:atomics`-backed insert path with a CAS retry loop; `snapshot/1`
+  conversion to the immutable form; Benchee benchmark suite.
 - **v0.3 (planned)** — sharded inserts via `PartitionSupervisor` and
-  cluster-wide merge over distributed Erlang.
+  cluster-wide merge over distributed Erlang. A higher-quality 64-bit
+  hash (likely xxhash3 via NIF) is under consideration on the same
+  timeline.
 - **v0.4 (potential)** — ExaLogLog, the 2024 follow-up to ULL for
   exa-scale cardinalities.
 
@@ -207,6 +283,7 @@ paper:
   number  = {7},
   year    = {2024},
   pages   = {1655--1668},
+  doi     = {10.14778/3654621.3654632},
   url     = {https://www.vldb.org/pvldb/vol17/p1655-ertl.pdf}
 }
 ```

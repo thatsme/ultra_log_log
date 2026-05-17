@@ -1,7 +1,7 @@
 defmodule UltraLogLog.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/thatsme/ultra_log_log"
 
   def project do
@@ -92,7 +92,8 @@ defmodule UltraLogLog.MixProject do
           UltraLogLog.Estimator.FGRA,
           UltraLogLog.Estimator.MLE,
           UltraLogLog.Estimator.Martingale
-        ]
+        ],
+        Concurrent: [UltraLogLog.Concurrent]
       ]
     ]
   end

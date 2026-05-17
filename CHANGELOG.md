@@ -7,6 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - YYYY-MM-DD
+
+Adds the first concurrent insert path for UltraLogLog: a lock-free,
+`:atomics`-backed sketch safe to insert into from any process or
+scheduler. The immutable `UltraLogLog` from v0.1 is unchanged.
+
+### Added
+
+- **`UltraLogLog.Concurrent`** — lock-free, `:atomics`-backed
+  concurrent insert path. One 64-bit `:atomics` cell per register;
+  inserts run a CAS retry loop applying `Encoding.merge_registers/2`
+  to the observed cell value. Safe to call from any process or
+  scheduler with no GenServer, no lock, and no message passing.
+  `add/2` returns `:ok` (side-effecting on shared state, not value
+  transformation).
+- **`UltraLogLog.Concurrent.snapshot/1`** — materializes the
+  immutable `%UltraLogLog{}` from a concurrent sketch for
+  estimation, serialization, or merge. Snapshot reads each cell
+  independently rather than taking a global lock; a snapshot taken
+  during active writes is a valid intermediate sketch by
+  monotonicity of register merge. The returned `%UltraLogLog{}` has
+  `martingale: nil` because the concurrent path does not maintain
+  Algorithm 2's per-insert update history; FGRA and MLE work
+  normally.
+- **Benchee benchmark suite** at `bench/concurrent_bench.exs`:
+  single-process throughput, multi-process scaling at N ∈ {1, 2, 4,
+  8, 16, 32}, immutable vs concurrent single-process comparison,
+  and `snapshot/1` cost at p ∈ {10, 12, 14, 16}.
+
+### Validation
+
+- **Equivalence under contention** — a concurrent sketch built by N
+  parallel processes is bit-for-bit identical to the serial sketch
+  of the same elements, asserted on the register state via exact
+  binary equality at `p ∈ {10, 12, 14}` × `N ∈ {1k, 10k, 100k}`.
+  The CAS loop is correct because `merge_registers/2` is monotone,
+  commutative, associative, and idempotent.
+- **Stress** — the highest-contention case (p=10, N=10k) was run
+  20× with independent seeds, 20/20 green.
+- **Idempotence under contention** — double-inserting an element
+  set in parallel produces the same registers as inserting it
+  once (CRDT idempotence under concurrency).
+- **StreamData property test** for arbitrary `(p, N, seed, procs)`
+  combinations, tagged `:statistical`.
+- **Baseline** — full Benchee output captured at
+  [`docs/measurements/concurrent-v0.2.txt`](https://github.com/thatsme/ultra_log_log/blob/main/docs/measurements/concurrent-v0.2.txt).
+
+### Notes
+
+- **Single-process performance**: the concurrent path is ~1.08×
+  faster than the immutable path even with one process (25.4 ips
+  vs 23.6 ips on 100k inserts at p=12, Apple M5). The immutable
+  `add/2` rebuilds a binary on every register-changing insert (an
+  O(m) head/byte/tail copy); the concurrent path does two
+  constant-time `:atomics` operations. Use the immutable form for
+  value semantics (snapshots, serialization, CRDT merge); use the
+  concurrent form for shared mutable sketches at high insert rates.
+- **Multi-process scaling**: monotone from 1 → ~4.35× at 32
+  processes on a 10-core machine, flattening past core count as
+  expected for a CPU-bound workload. See the README for the full
+  table.
+- **Snapshot semantics**: `snapshot/1` is not globally atomic
+  across cells. By design — register merge is monotone in the
+  UltraLogLog partial order, so a "torn" snapshot is always a
+  valid intermediate sketch, never an invalid one. Quiesce
+  writers (e.g. `Task.await_many/2` on insert tasks) for a
+  globally consistent snapshot.
+- **Memory**: the active concurrent structure costs 8× the
+  immutable form (one 64-bit `:atomics` cell per register; 128 KB
+  at p=14 vs 16 KB). Deliberate — concurrent sketches are
+  long-lived shared objects, not millions-of-instances. Packing
+  multiple registers per cell would create logical false sharing
+  and amplify contention.
+- **Build environment**: `benchee` was moved to `only: [:dev,
+  :test]` to route around the same OTP 28 `:hyper` compile
+  failure that affects `mix dialyzer`, `mix docs`, and `mix
+  hex.publish`. Benchmarks therefore run under `MIX_ENV=test mix
+  run bench/concurrent_bench.exs`. Tracked in issue #2.
+- **Not in v0.2**: no native hash NIF, no `PartitionSupervisor`
+  sharding, no changes to the v0.1 immutable sketch, encoding, or
+  estimators.
+
 ## [0.1.0] - 2026-05-15
 
 First public release. Implements the immutable UltraLogLog sketch with
@@ -88,5 +170,6 @@ Hash4j v0.17.0 Java reference.
   v0.3. No skeleton modules ship in v0.1 — these will land as
   complete commits when their respective releases are ready.
 
-[Unreleased]: https://github.com/thatsme/ultra_log_log/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/thatsme/ultra_log_log/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/thatsme/ultra_log_log/releases/tag/v0.2.0
 [0.1.0]: https://github.com/thatsme/ultra_log_log/releases/tag/v0.1.0

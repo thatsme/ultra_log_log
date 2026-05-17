@@ -104,20 +104,26 @@ defmodule UltraLogLog do
 
   `add/2` accepts any term (hashed internally via `UltraLogLog.Hash`)
   or a pre-computed non-negative integer treated as a 64-bit hash. The
-  v0.1 internal hash is a `:erlang.phash2/2` derivation suitable for
+  internal hash is a `:erlang.phash2/2` derivation suitable for
   well-distributed inputs; production deployments with adversarial or
   skewed keyspaces should pass pre-computed hashes from a quality
-  64-bit function (xxhash3, wyhash). A native xxhash3 NIF is planned
-  for v0.2.
+  64-bit function (xxhash3, wyhash).
+
+  ## Concurrent inserts
+
+  For shared sketches fed by many processes, see `UltraLogLog.Concurrent` —
+  a lock-free, `:atomics`-backed variant with a `snapshot/1` to this
+  immutable form for estimation, merge, and serialization.
 
   ## Status
 
-    * v0.1 ships the immutable sketch, all three estimators, merge,
-      serialize, and downsize (full implementation in v0.2). Bit-exact
-      validated against Hash4j v0.17.0.
-    * v0.2 will add a lock-free `:atomics`-backed insert path, a native
-      hash function, and benchmarks.
-    * v0.3 will add `PartitionSupervisor`-sharded cluster-wide merge.
+    * v0.1 — immutable sketch, all three estimators, merge, serialize,
+      and downsize (precision-preserving only). Bit-exact validated
+      against Hash4j v0.17.0.
+    * v0.2 — `UltraLogLog.Concurrent`: lock-free `:atomics`-backed
+      insert path with a CAS retry loop and `snapshot/1` to the
+      immutable form; Benchee benchmark suite.
+    * v0.3 (planned) — `PartitionSupervisor`-sharded cluster-wide merge.
 
   See `CHANGELOG.md` for the full release history and `README.md` for
   the empirical-validation summary.
