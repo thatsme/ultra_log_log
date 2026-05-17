@@ -88,6 +88,11 @@ scheduler. The immutable `UltraLogLog` from v0.1 is unchanged.
 - **Not in v0.2**: no native hash NIF, no `PartitionSupervisor`
   sharding, no changes to the v0.1 immutable sketch, encoding, or
   estimators.
+- **Downsize**: precision-reducing `downsize/2` (target_p < p)
+  remains unimplemented; it was tentatively scoped to v0.2 in the
+  v0.1.0 notes but deferred. No timeline is promised.
+- **CI**: still not configured. The v0.1.0 notes anticipated
+  GitHub Actions for v0.2; deferred. Tracked for a future release.
 
 ## [0.1.0] - 2026-05-15
 

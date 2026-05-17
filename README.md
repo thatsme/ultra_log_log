@@ -137,7 +137,7 @@ serialization round-trips, explicit CRDT merge. Use
 `UltraLogLog.Concurrent` when many processes need to feed a single
 shared sketch at high insert rates.
 
-## Empirical validation
+## Empirical validation and benchmarks
 
 Every estimator is cross-checked against Hash4j v0.17.0's reference
 implementation on the same 16 register snapshots (4 precisions ×
@@ -220,8 +220,8 @@ counts on a 10-core Apple M5 with 100k pre-hashed inserts at `p=12`:
 The curve scales monotonically and flattens past core count, as
 expected for a CPU-bound workload. The high-process-count flattening
 is partly `Task.async` spawn/await overhead in the benchmark harness;
-long-lived inserter processes feeding a single shared sketch should
-scale closer to the 8-process point.
+we'd expect long-lived inserter processes feeding a single shared
+sketch to scale better, though that scenario isn't measured here.
 
 Single-process comparison: the concurrent path runs at ~25.4 ips
 against ~23.6 ips for the immutable path (~1.08× faster), the
