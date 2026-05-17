@@ -1,0 +1,150 @@
+Generated: 2026-05-17T03:51:41Z via MIX_ENV=test mix run bench/concurrent_bench.exs
+
+================================================================
+UltraLogLog v0.2 concurrent insert benchmarks
+================================================================
+schedulers_online: 10
+precision:         12  (m = 4096 registers)
+inserts per run:   100000
+
+System: Erlang/OTP 28 [erts-16.3] [source] [64-bit] [smp:10:10] [ds:10:10:10] [async-threads:1] [jit] [dtrace]
+
+
+================================================================
+(1) + (3): Single-process insert throughput, immutable vs concurrent
+================================================================
+
+Operating System: macOS
+CPU Information: Apple M5
+Number of Available Cores: 10
+Available memory: 24 GB
+Elixir 1.19.5
+Erlang 28.4.1
+JIT enabled: true
+
+Benchmark suite executing with the following configuration:
+warmup: 2 s
+time: 5 s
+memory time: 0 ns
+reduction time: 0 ns
+parallel: 1
+inputs: 100k pre-hashed inserts
+Estimated total run time: 14 s
+Excluding outliers: false
+
+Benchmarking Concurrent.add (single proc) with input 100k pre-hashed inserts ...
+Benchmarking UltraLogLog.add immutable (single proc) with input 100k pre-hashed inserts ...
+Calculating statistics...
+Formatting results...
+
+##### With input 100k pre-hashed inserts #####
+Name                                              ips        average  deviation         median         99th %
+Concurrent.add (single proc)                    25.42       39.34 ms     ±1.28%       39.30 ms       40.95 ms
+UltraLogLog.add immutable (single proc)         23.57       42.42 ms     ±1.09%       42.41 ms       43.79 ms
+
+Comparison: 
+Concurrent.add (single proc)                    25.42
+UltraLogLog.add immutable (single proc)         23.57 - 1.08x slower +3.08 ms
+
+================================================================
+(2): Concurrent insert scaling — N processes inserting in parallel
+================================================================
+
+Each scenario starts a fresh Concurrent sketch, then partitions
+100000 pre-hashed inserts across N parallel processes, waits
+for them all to finish via Task.await_many. Reported time is total
+wall-clock for the whole N-process job (so lower = better and the
+scaling curve is visible directly in throughput = 100000 / time).
+
+Operating System: macOS
+CPU Information: Apple M5
+Number of Available Cores: 10
+Available memory: 24 GB
+Elixir 1.19.5
+Erlang 28.4.1
+JIT enabled: true
+
+Benchmark suite executing with the following configuration:
+warmup: 2 s
+time: 5 s
+memory time: 0 ns
+reduction time: 0 ns
+parallel: 1
+inputs: none specified
+Estimated total run time: 42 s
+Excluding outliers: false
+
+Benchmarking 1 proc ...
+Benchmarking 16 procs ...
+Benchmarking 2 procs ...
+Benchmarking 32 procs ...
+Benchmarking 4 procs ...
+Benchmarking 8 procs ...
+Calculating statistics...
+Formatting results...
+
+Name               ips        average  deviation         median         99th %
+32 procs        107.92        9.27 ms     ±3.07%        9.23 ms       10.12 ms
+16 procs        105.26        9.50 ms     ±3.45%        9.47 ms       10.36 ms
+8 procs          82.13       12.18 ms     ±3.83%       12.25 ms       13.73 ms
+4 procs          69.70       14.35 ms     ±2.95%       14.30 ms       15.50 ms
+2 procs          43.45       23.02 ms     ±2.88%       23.01 ms       25.71 ms
+1 proc           24.81       40.30 ms     ±0.88%       40.30 ms       41.27 ms
+
+Comparison: 
+32 procs        107.92
+16 procs        105.26 - 1.03x slower +0.23 ms
+8 procs          82.13 - 1.31x slower +2.91 ms
+4 procs          69.70 - 1.55x slower +5.08 ms
+2 procs          43.45 - 2.48x slower +13.75 ms
+1 proc           24.81 - 4.35x slower +31.04 ms
+
+================================================================
+(4): snapshot/1 cost at various precisions
+================================================================
+
+Operating System: macOS
+CPU Information: Apple M5
+Number of Available Cores: 10
+Available memory: 24 GB
+Elixir 1.19.5
+Erlang 28.4.1
+JIT enabled: true
+
+Benchmark suite executing with the following configuration:
+warmup: 1 s
+time: 3 s
+memory time: 0 ns
+reduction time: 0 ns
+parallel: 1
+inputs: p=10 (m=1024), p=12 (m=4096), p=14 (m=16384), p=16 (m=65536)
+Estimated total run time: 16 s
+Excluding outliers: false
+
+Benchmarking Concurrent.snapshot with input p=10 (m=1024) ...
+Benchmarking Concurrent.snapshot with input p=12 (m=4096) ...
+Benchmarking Concurrent.snapshot with input p=14 (m=16384) ...
+Benchmarking Concurrent.snapshot with input p=16 (m=65536) ...
+Calculating statistics...
+Formatting results...
+
+##### With input p=10 (m=1024) #####
+Name                          ips        average  deviation         median         99th %
+Concurrent.snapshot       95.40 K       10.48 μs    ±65.50%        8.92 μs       25.08 μs
+
+##### With input p=12 (m=4096) #####
+Name                          ips        average  deviation         median         99th %
+Concurrent.snapshot       23.81 K       42.01 μs    ±27.76%       38.21 μs       85.21 μs
+
+##### With input p=14 (m=16384) #####
+Name                          ips        average  deviation         median         99th %
+Concurrent.snapshot        6.84 K      146.22 μs     ±4.83%      144.54 μs      165.25 μs
+
+##### With input p=16 (m=65536) #####
+Name                          ips        average  deviation         median         99th %
+Concurrent.snapshot        1.57 K      636.37 μs     ±4.38%      638.04 μs      698.41 μs
+
+================================================================
+Done.
+================================================================
+

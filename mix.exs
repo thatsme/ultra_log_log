@@ -30,7 +30,11 @@ defmodule UltraLogLog.MixProject do
 
       # Dev / test
       {:stream_data, "~> 1.1", only: [:dev, :test]},
-      {:benchee, "~> 1.3", only: [:dev]},
+      # Benchee in :test as well so `MIX_ENV=test mix run bench/*.exs`
+      # is the documented benchmark invocation (same workaround as
+      # `ex_doc` / `dialyxir` below — :test env sidesteps the OTP 27+
+      # compile failure in the `:hyper` comparison dep).
+      {:benchee, "~> 1.3", only: [:dev, :test]},
       # Available in both :dev and :test so `MIX_ENV=test mix docs`
       # works as the documented build path (test env avoids the
       # OTP 27+ compile failure in the `:hyper` benchmark comparison
