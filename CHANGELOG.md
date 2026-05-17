@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - YYYY-MM-DD
+## [0.2.0] - 2026-05-17
 
 Adds the first concurrent insert path for UltraLogLog: a lock-free,
 `:atomics`-backed sketch safe to insert into from any process or
